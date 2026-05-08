@@ -1,0 +1,90 @@
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor and IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Logs and temporary files
+*.class
+*.log
+*.pyc
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+.atom/
+.build/
+.buildlog/
+.history/
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# Dart and Flutter
+**/.dart_tool/
+**/.pub-cache/
+**/.pub/
+**/build/
+**/coverage/
+**/doc/api/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/ios/Flutter/.last_build_id
+
+# Flutter obfuscation and symbolication outputs
+**/app.*.symbols
+**/app.*.map.json
+
+# Android build outputs
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/android/.gradle/
+**/android/local.properties
+**/android/**/generated/
+
+# iOS and macOS generated files
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/App.framework
+**/ios/ServiceDefinitions.json
+**/macos/Pods/
+**/macos/.symlinks/
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/ephemeral/
+
+# Linux and Windows generated files
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+# Firebase local emulator state
+**/.firebase/
+**/firebase-debug.log
+**/firestore-debug.log
+**/ui-debug.log
+
+# Environment and local secrets
+**/.env
+**/.env.*
+!**/.env.example
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key

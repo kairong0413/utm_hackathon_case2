@@ -118,6 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.badge_rounded)),
               ),
               const SizedBox(height: 12),
+              _ReadOnlyFact(label: 'User ID', value: widget.user.userId.isEmpty ? 'Not assigned yet' : widget.user.userId),
+              const SizedBox(height: 2),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -154,6 +156,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _ReadOnlyFact(label: 'Accessory', value: widget.cat.accessory),
               _ReadOnlyFact(label: 'Current mood', value: widget.finance.mood.label),
               _ReadOnlyFact(label: 'Growth stage', value: widget.finance.stage.label),
+              _ReadOnlyFact(label: 'Level', value: '${widget.finance.level} / 20'),
+              _ReadOnlyFact(label: 'Unlocked', value: widget.finance.levelReward),
+              _ReadOnlyFact(label: 'Owned items', value: widget.cat.ownedItems.isEmpty ? 'None yet' : widget.cat.ownedItems.join(', ')),
             ],
           ),
         ),
@@ -215,7 +220,13 @@ class _ReadOnlyFact extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(label, style: const TextStyle(color: Colors.black54))),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+          Flexible(
+            child: SelectableText(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
         ],
       ),
     );

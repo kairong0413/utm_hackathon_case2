@@ -12,6 +12,8 @@ class CatRoomScene extends StatelessWidget {
     required this.accessory,
     required this.bounce,
     required this.breedIndex,
+    required this.level,
+    required this.activity,
     required this.showHearts,
     required this.heartProgress,
   });
@@ -21,6 +23,8 @@ class CatRoomScene extends StatelessWidget {
   final String accessory;
   final double bounce;
   final int breedIndex;
+  final int level;
+  final CatActivity activity;
   final bool showHearts;
   final double heartProgress;
 
@@ -42,6 +46,8 @@ class CatRoomScene extends StatelessWidget {
                     painter: RoomPainter(
                       mood: mood,
                       bounce: bounce,
+                      level: level,
+                      activity: activity,
                       bankProgress: mood == CatMood.thriving
                           ? 1
                           : mood == CatMood.distressed || mood == CatMood.hissing
@@ -86,6 +92,7 @@ class CatRoomScene extends StatelessWidget {
                           accessory: accessory,
                           bounce: bounce,
                           breedIndex: breedIndex,
+                          activity: activity,
                         ),
                       ),
                     ),
@@ -108,11 +115,15 @@ class RoomPainter extends CustomPainter {
   RoomPainter({
     required this.mood,
     required this.bounce,
+    required this.level,
+    required this.activity,
     required this.bankProgress,
   });
 
   final CatMood mood;
   final double bounce;
+  final int level;
+  final CatActivity activity;
   final double bankProgress;
 
   @override
@@ -146,11 +157,16 @@ class RoomPainter extends CustomPainter {
 
     _drawFloor(canvas, size);
     _drawWallDecor(canvas, size);
-    _drawCarpet(canvas, size);
-    _drawBed(canvas, size);
-    _drawTable(canvas, size);
-    _drawBank(canvas, size);
-    _drawToys(canvas, size);
+    if (level >= 2) _drawCarpet(canvas, size);
+    if (level >= 1) _drawFoodBowl(canvas, size);
+    if (level >= 3) _drawBed(canvas, size);
+    if (level >= 4) _drawTable(canvas, size);
+    if (level >= 6) _drawBank(canvas, size);
+    if (level >= 5) _drawToys(canvas, size);
+    if (level >= 8) _drawWindow(canvas, size);
+    if (level >= 9) _drawScratchPost(canvas, size);
+    if (level >= 12) _drawLamp(canvas, size);
+    if (level >= 16) _drawCrownStand(canvas, size);
   }
 
   Path _quad(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy) {
@@ -197,12 +213,14 @@ class RoomPainter extends CustomPainter {
     canvas.drawLine(Offset(size.width * .42, size.height * .18), Offset(size.width * .48, size.height * .14), chart);
     canvas.drawLine(Offset(size.width * .48, size.height * .14), Offset(size.width * .56, size.height * .19), chart);
 
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(size.width * .1, size.height * .28, size.width * .24, 12), const Radius.circular(6)),
-      Paint()..color = const Color(0xFF8B5E34),
-    );
-    canvas.drawCircle(Offset(size.width * .18, size.height * .24), 14, Paint()..color = const Color(0xFFFFB703));
-    canvas.drawCircle(Offset(size.width * .27, size.height * .235), 10, Paint()..color = const Color(0xFF7C3AED));
+    if (level >= 5) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(size.width * .1, size.height * .28, size.width * .24, 12), const Radius.circular(6)),
+        Paint()..color = const Color(0xFF8B5E34),
+      );
+      canvas.drawCircle(Offset(size.width * .18, size.height * .24), 14, Paint()..color = const Color(0xFFFFB703));
+      canvas.drawCircle(Offset(size.width * .27, size.height * .235), 10, Paint()..color = const Color(0xFF7C3AED));
+    }
   }
 
   void _drawBed(Canvas canvas, Size size) {
@@ -262,7 +280,10 @@ class RoomPainter extends CustomPainter {
   }
 
   void _drawToys(Canvas canvas, Size size) {
-    final ballCenter = Offset(size.width * .18, size.height * .86);
+    final ballCenter = Offset(
+      size.width * .18 + (activity == CatActivity.play ? math.sin(bounce * math.pi * 2) * 12 : 0),
+      size.height * .86,
+    );
     final yarnLine = Paint()
       ..color = const Color(0xFFFFCCD5)
       ..strokeWidth = 2
@@ -271,10 +292,61 @@ class RoomPainter extends CustomPainter {
     canvas.drawArc(Rect.fromCircle(center: ballCenter, radius: 18), -.8, 2.2, false, yarnLine);
     canvas.drawArc(Rect.fromCircle(center: ballCenter, radius: 12), 1.2, 2.6, false, yarnLine);
 
+    if (level < 11) return;
     final mx = size.width * .62;
     final my = size.height * .86;
     canvas.drawOval(Rect.fromLTWH(mx, my, 48, 24), Paint()..color = const Color(0xFF9AA5B1));
     canvas.drawCircle(Offset(mx + 9, my - 4), 7, Paint()..color = const Color(0xFF9AA5B1));
+  }
+
+  void _drawFoodBowl(Canvas canvas, Size size) {
+    final x = size.width * .34;
+    final y = size.height * .88;
+    canvas.drawOval(Rect.fromCenter(center: Offset(x, y), width: 58, height: 18), Paint()..color = const Color(0xFF4361EE));
+    canvas.drawOval(Rect.fromCenter(center: Offset(x, y - 4), width: 44, height: 12), Paint()..color = activity == CatActivity.eat ? const Color(0xFFFFB703) : Colors.white);
+  }
+
+  void _drawWindow(Canvas canvas, Size size) {
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width * .68, size.height * .12, size.width * .16, size.height * .18),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(rect, Paint()..color = const Color(0xFFBDE0FE));
+    final windowLine = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 3;
+    canvas.drawLine(Offset(rect.outerRect.center.dx, rect.outerRect.top), Offset(rect.outerRect.center.dx, rect.outerRect.bottom), windowLine);
+    canvas.drawLine(Offset(rect.outerRect.left, rect.outerRect.center.dy), Offset(rect.outerRect.right, rect.outerRect.center.dy), windowLine);
+  }
+
+  void _drawScratchPost(Canvas canvas, Size size) {
+    final x = size.width * .09;
+    final y = size.height * .72;
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x, y, 20, 92), const Radius.circular(8)), Paint()..color = const Color(0xFFB08968));
+    canvas.drawOval(Rect.fromCenter(center: Offset(x + 10, y + 94), width: 72, height: 18), Paint()..color = const Color(0xFF7F5539));
+  }
+
+  void _drawLamp(Canvas canvas, Size size) {
+    final x = size.width * .9;
+    final y = size.height * .44;
+    final pole = Paint()
+      ..color = const Color(0xFF6B7280)
+      ..strokeWidth = 5;
+    canvas.drawLine(Offset(x, y), Offset(x, y + 120), pole);
+    canvas.drawPath(
+      Path()..moveTo(x - 34, y)..lineTo(x + 34, y)..lineTo(x + 22, y + 38)..lineTo(x - 22, y + 38)..close(),
+      Paint()..color = const Color(0xFFFFD166),
+    );
+  }
+
+  void _drawCrownStand(Canvas canvas, Size size) {
+    final x = size.width * .53;
+    final y = size.height * .32;
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x, y, 72, 12), const Radius.circular(6)), Paint()..color = const Color(0xFF9C6644));
+    canvas.drawPath(
+      Path()..moveTo(x + 14, y - 4)..lineTo(x + 24, y - 28)..lineTo(x + 36, y - 8)..lineTo(x + 48, y - 28)..lineTo(x + 58, y - 4)..close(),
+      Paint()..color = const Color(0xFFFFB703),
+    );
   }
 
   void _drawCarpet(Canvas canvas, Size size) {
@@ -295,7 +367,11 @@ class RoomPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant RoomPainter oldDelegate) {
-    return oldDelegate.mood != mood || oldDelegate.bounce != bounce || oldDelegate.bankProgress != bankProgress;
+    return oldDelegate.mood != mood ||
+        oldDelegate.bounce != bounce ||
+        oldDelegate.level != level ||
+        oldDelegate.activity != activity ||
+        oldDelegate.bankProgress != bankProgress;
   }
 }
 
@@ -306,6 +382,7 @@ class CatPainter extends CustomPainter {
     required this.accessory,
     required this.bounce,
     required this.breedIndex,
+    required this.activity,
   });
 
   final CatMood mood;
@@ -313,6 +390,7 @@ class CatPainter extends CustomPainter {
   final String accessory;
   final double bounce;
   final int breedIndex;
+  final CatActivity activity;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -336,25 +414,34 @@ class CatPainter extends CustomPainter {
       );
     }
 
-    final bodyHeight = stage == CatStage.kitten ? 116.0 : 136.0;
-    final bodyWidth = stage == CatStage.guardian ? 172.0 : 150.0;
+    final sleeping = activity == CatActivity.sleep;
+    final bodyHeight = sleeping ? 92.0 : (stage == CatStage.kitten ? 116.0 : 136.0);
+    final bodyWidth = sleeping ? 176.0 : (stage == CatStage.guardian ? 172.0 : 150.0);
     canvas.drawOval(Rect.fromCenter(center: const Offset(0, 28), width: bodyWidth, height: bodyHeight), body);
-    canvas.drawOval(const Rect.fromLTWH(-72, -96, 144, 128), body);
+    canvas.drawOval(Rect.fromLTWH(sleeping ? -96 : -72, sleeping ? -70 : -96, sleeping ? 120 : 144, sleeping ? 92 : 128), body);
     canvas.drawPath(Path()..moveTo(-58, -74)..lineTo(-92, -132)..lineTo(-26, -96)..close(), body);
     canvas.drawPath(Path()..moveTo(58, -74)..lineTo(92, -132)..lineTo(26, -96)..close(), body);
 
-    canvas.drawCircle(const Offset(-34, -38), 9, black);
-    canvas.drawCircle(const Offset(34, -38), 9, black);
+    if (sleeping) {
+      canvas.drawArc(const Rect.fromLTWH(-66, -42, 26, 12), 0, math.pi, false, line);
+      canvas.drawArc(const Rect.fromLTWH(-24, -42, 26, 12), 0, math.pi, false, line);
+      _drawSleepMarks(canvas);
+    } else {
+      canvas.drawCircle(const Offset(-34, -38), 9, black);
+      canvas.drawCircle(const Offset(34, -38), 9, black);
+    }
     if (mood == CatMood.hissing) {
       canvas.drawLine(const Offset(-46, -48), const Offset(-20, -34), line);
       canvas.drawLine(const Offset(46, -48), const Offset(20, -34), line);
     }
     canvas.drawOval(const Rect.fromLTWH(-8, -22, 16, 11), Paint()..color = const Color(0xFFFF8FAB));
-    _drawMouth(canvas, line);
+    if (!sleeping) _drawMouth(canvas, line);
     _drawWhiskers(canvas, line);
     canvas.drawOval(const Rect.fromLTWH(-38, -4, 76, 42), Paint()..color = _bellyColor);
     _drawTail(canvas, line, body);
     _drawAccessory(canvas);
+    if (activity == CatActivity.eat) _drawSnack(canvas);
+    if (activity == CatActivity.play) _drawPlaySpark(canvas);
     if (mood == CatMood.distressed || mood == CatMood.hissing) _drawDebtFleas(canvas);
     canvas.restore();
   }
@@ -388,6 +475,9 @@ class CatPainter extends CustomPainter {
   }
 
   void _drawAccessory(Canvas canvas) {
+    final normalizedAccessory = accessory.trim().toLowerCase();
+    if (normalizedAccessory.isEmpty || normalizedAccessory == 'no item') return;
+
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(-48, -6, 96, 14), const Radius.circular(99)),
       Paint()..color = _accessoryColor,
@@ -407,6 +497,31 @@ class CatPainter extends CustomPainter {
     }
   }
 
+  void _drawSleepMarks(Canvas canvas) {
+    final textPainter = TextPainter(
+      text: const TextSpan(
+        text: 'Zzz',
+        style: TextStyle(color: Color(0xFF4361EE), fontSize: 24, fontWeight: FontWeight.w900),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    textPainter.paint(canvas, const Offset(46, -116));
+  }
+
+  void _drawSnack(Canvas canvas) {
+    canvas.drawCircle(const Offset(-4, -6), 6, Paint()..color = const Color(0xFFFFB703));
+    canvas.drawCircle(const Offset(12, -4), 5, Paint()..color = const Color(0xFFFFB703));
+  }
+
+  void _drawPlaySpark(Canvas canvas) {
+    final spark = Paint()
+      ..color = const Color(0xFF7C3AED)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(-102, -52), const Offset(-82, -72), spark);
+    canvas.drawLine(const Offset(-102, -72), const Offset(-82, -52), spark);
+  }
+
   Color get _furColor {
     if (mood == CatMood.distressed || mood == CatMood.hissing) return const Color(0xFFC7B6A1);
     return switch (breedIndex) {
@@ -420,9 +535,13 @@ class CatPainter extends CustomPainter {
   Color get _bellyColor => breedIndex == 1 ? Colors.white : const Color(0xFFFFF2D7);
 
   Color get _accessoryColor {
-    if (accessory.contains('cape')) return const Color(0xFF7C3AED);
-    if (accessory.contains('bowtie')) return const Color(0xFF4361EE);
-    if (accessory.contains('crown')) return const Color(0xFFFFB703);
+    final normalizedAccessory = accessory.toLowerCase();
+    if (normalizedAccessory.contains('cape') || normalizedAccessory.contains('cloak')) return const Color(0xFF7C3AED);
+    if (normalizedAccessory.contains('bowtie') || normalizedAccessory.contains('glasses')) return const Color(0xFF4361EE);
+    if (normalizedAccessory.contains('crown') || normalizedAccessory.contains('bell') || normalizedAccessory.contains('medal')) return const Color(0xFFFFB703);
+    if (normalizedAccessory.contains('ribbon') || normalizedAccessory.contains('bandana')) return const Color(0xFFE63946);
+    if (normalizedAccessory.contains('scarf') || normalizedAccessory.contains('moon')) return const Color(0xFF18A999);
+    if (normalizedAccessory.contains('backpack') || normalizedAccessory.contains('hoodie')) return const Color(0xFF5A3825);
     return const Color(0xFFD4AF37);
   }
 
@@ -432,7 +551,8 @@ class CatPainter extends CustomPainter {
         oldDelegate.stage != stage ||
         oldDelegate.accessory != accessory ||
         oldDelegate.bounce != bounce ||
-        oldDelegate.breedIndex != breedIndex;
+        oldDelegate.breedIndex != breedIndex ||
+        oldDelegate.activity != activity;
   }
 }
 

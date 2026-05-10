@@ -32,7 +32,8 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
         name: name,
         breed: _breeds[_breedIndex],
         breedIndex: _breedIndex,
-        accessory: 'Golden collar',
+        accessory: 'No item',
+        ownedItems: const [],
       ),
       _weeklyGoal,
     );
@@ -66,9 +67,11 @@ class _AdoptionScreenState extends State<AdoptionScreen> {
                       child: CatRoomScene(
                         mood: CatMood.thriving,
                         stage: CatStage.kitten,
-                        accessory: 'Golden collar',
+                        accessory: 'No item',
                         bounce: .5,
                         breedIndex: _breedIndex,
+                        level: 1,
+                        activity: CatActivity.idle,
                         showHearts: false,
                         heartProgress: 0,
                       ),

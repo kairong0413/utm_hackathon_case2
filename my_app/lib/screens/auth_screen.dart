@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/material.dart';
 
 import '../models/app_models.dart';
@@ -6,7 +7,7 @@ import '../widgets/app_widgets.dart';
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.onAuthenticated});
 
-  final ValueChanged<GXUser> onAuthenticated;
+  final Future<void> Function(AuthCredentials credentials) onAuthenticated;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -22,6 +23,8 @@ class _AuthScreenState extends State<AuthScreen> {
   AuthMode _mode = AuthMode.login;
   bool _studentMode = true;
   bool _hidePassword = true;
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -32,16 +35,53 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    widget.onAuthenticated(
-      GXUser(
-        name: _mode == AuthMode.login ? 'Student Saver' : _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        studentMode: _studentMode,
-      ),
-    );
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await widget.onAuthenticated(
+        AuthCredentials(
+          mode: _mode,
+          name: _nameController.text.trim().isEmpty ? 'GX Saver' : _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+          password: _passwordController.text,
+          studentMode: _studentMode,
+        ),
+      );
+    } catch (error) {
+      setState(() => _error = _friendlyAuthError(error));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _friendlyAuthError(Object error) {
+    if (error is firebase_auth.FirebaseAuthException) {
+      final code = error.code;
+      final message = switch (code) {
+        'invalid-credential' || 'user-not-found' || 'wrong-password' => 'No matching account found for this email and password.',
+        'email-already-in-use' => 'This email already has an account.',
+        'weak-password' => 'Use a stronger password.',
+        'network-request-failed' => 'Network error. Check your Firebase connection.',
+        'user-disabled' => 'This account has been disabled in Firebase Authentication.',
+        'operation-not-allowed' => 'Email/password login is not enabled in Firebase Authentication.',
+        'too-many-requests' => 'Too many failed attempts. Wait a bit, then try again.',
+        _ => 'Authentication failed.',
+      };
+      return '$message Firebase code: $code';
+    }
+    final text = error.toString();
+    if (text.contains('user-not-found') || text.contains('invalid-credential')) {
+      return 'No matching account found. Try signup first.';
+    }
+    if (text.contains('email-already-in-use')) return 'This email already has an account.';
+    if (text.contains('weak-password')) return 'Use a stronger password.';
+    if (text.contains('network')) return 'Network error. Check your Firebase connection.';
+    return 'Authentication failed. Please check the details and try again.';
   }
 
   @override
@@ -179,10 +219,19 @@ class _AuthScreenState extends State<AuthScreen> {
               title: const Text('Student / fresh graduate mode'),
             ),
             const SizedBox(height: 12),
+            if (_error != null) ...[
+              Text(_error!, style: const TextStyle(color: Color(0xFFE63946), fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+            ],
             FilledButton.icon(
-              onPressed: _submit,
-              icon: Icon(isSignup ? Icons.person_add_rounded : Icons.login_rounded),
-              label: Text(isSignup ? 'Create account' : 'Login'),
+              onPressed: _loading ? null : _submit,
+              icon: _loading
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(isSignup ? Icons.person_add_rounded : Icons.login_rounded),
+              label: Text(_loading ? 'Please wait...' : (isSignup ? 'Create account' : 'Login')),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
             ),
           ],

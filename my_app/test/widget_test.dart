@@ -1,30 +1,58 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:my_app/main.dart';
+import 'package:my_app/app/gx_financial_app.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('login and adoption flow opens dashboard', (tester) async {
+    await tester.pumpWidget(const GXFinancialApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('GX Financial Cat'), findsOneWidget);
+    expect(find.text('Login'), findsWidgets);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.text('Login').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Adopt your GX-Cat'), findsOneWidget);
+    expect(find.text('Start resilience journey'), findsOneWidget);
+
+    await tester.tap(find.text('Start resilience journey'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('GX Financial Cat'), findsOneWidget);
+    expect(find.text('Nudge Engine'), findsOneWidget);
+    expect(find.text('Feed with Round-up'), findsOneWidget);
+  });
+
+  testWidgets('BNPL action surfaces hissing state', (tester) async {
+    await tester.pumpWidget(const GXFinancialApp());
+    await tester.tap(find.text('Login').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start resilience journey'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Simulate BNPL Checkout'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.textContaining('BNPL Hiss'), findsWidgets);
+    expect(find.text('BNPL alert: fashion checkout'), findsOneWidget);
+  });
+
+  testWidgets('profile tab updates cat name', (tester) async {
+    await tester.pumpWidget(const GXFinancialApp());
+    await tester.tap(find.text('Login').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start resilience journey'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextField, 'Cat name'), 'Luna');
+    await tester.tap(find.text('Save profile'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Meet Luna'), findsOneWidget);
   });
 }

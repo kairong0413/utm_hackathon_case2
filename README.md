@@ -5,7 +5,7 @@ GX Finance Cat is a gamified personal finance app that helps students build bett
 https://youtu.be/edrlWF2KYoo
 
 ## APK File
-[Download APK](release_apk/GX-Finance-Cat.apk)
+[Download APK](my_app/release_apk/GX-Finance-Cat.apk)
 
 
 ## Main Features

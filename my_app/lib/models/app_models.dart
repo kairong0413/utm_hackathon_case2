@@ -401,6 +401,7 @@ class GXTransaction {
     return {
       'title': title,
       'amount': amount,
+      'iconKey': _transactionIconKey(icon),
       'iconCodePoint': icon.codePoint,
       'positive': positive,
     };
@@ -410,10 +411,79 @@ class GXTransaction {
     return GXTransaction(
       map['title'] as String? ?? 'Transaction',
       (map['amount'] as num?)?.toDouble() ?? 0,
-      IconData(map['iconCodePoint'] as int? ?? Icons.receipt_long.codePoint, fontFamily: 'MaterialIcons'),
+      _transactionIconFromMap(map),
       map['positive'] as bool? ?? true,
     );
   }
+}
+
+String _transactionIconKey(IconData icon) {
+  if (icon == Icons.pets) return 'pets';
+  if (icon == Icons.restaurant_rounded) return 'restaurant';
+  if (icon == Icons.account_balance_wallet_rounded) return 'wallet';
+  if (icon == Icons.shield_rounded) return 'shield';
+  if (icon == Icons.auto_awesome_rounded) return 'sparkle';
+  if (icon == Icons.local_drink_rounded) return 'drink';
+  if (icon == Icons.ramen_dining_rounded) return 'food';
+  if (icon == Icons.directions_bus_rounded) return 'bus';
+  if (icon == Icons.warning_rounded) return 'warning';
+  if (icon == Icons.savings_rounded) return 'savings';
+  if (icon == Icons.shopping_bag_rounded) return 'shopping';
+  if (icon == Icons.fact_check) return 'report';
+  return 'receipt';
+}
+
+IconData _transactionIconFromMap(Map<String, dynamic> map) {
+  final iconKey = map['iconKey'] as String?;
+  if (iconKey != null) return _transactionIconFromKey(iconKey);
+  return _transactionIconFromCodePoint(map['iconCodePoint'] as int?);
+}
+
+IconData _transactionIconFromKey(String key) {
+  switch (key) {
+    case 'pets':
+      return Icons.pets;
+    case 'restaurant':
+      return Icons.restaurant_rounded;
+    case 'wallet':
+      return Icons.account_balance_wallet_rounded;
+    case 'shield':
+      return Icons.shield_rounded;
+    case 'sparkle':
+      return Icons.auto_awesome_rounded;
+    case 'drink':
+      return Icons.local_drink_rounded;
+    case 'food':
+      return Icons.ramen_dining_rounded;
+    case 'bus':
+      return Icons.directions_bus_rounded;
+    case 'warning':
+      return Icons.warning_rounded;
+    case 'savings':
+      return Icons.savings_rounded;
+    case 'shopping':
+      return Icons.shopping_bag_rounded;
+    case 'report':
+      return Icons.fact_check;
+    default:
+      return Icons.receipt_long;
+  }
+}
+
+IconData _transactionIconFromCodePoint(int? codePoint) {
+  if (codePoint == Icons.pets.codePoint) return Icons.pets;
+  if (codePoint == Icons.restaurant_rounded.codePoint) return Icons.restaurant_rounded;
+  if (codePoint == Icons.account_balance_wallet_rounded.codePoint) return Icons.account_balance_wallet_rounded;
+  if (codePoint == Icons.shield_rounded.codePoint) return Icons.shield_rounded;
+  if (codePoint == Icons.auto_awesome_rounded.codePoint) return Icons.auto_awesome_rounded;
+  if (codePoint == Icons.local_drink_rounded.codePoint) return Icons.local_drink_rounded;
+  if (codePoint == Icons.ramen_dining_rounded.codePoint) return Icons.ramen_dining_rounded;
+  if (codePoint == Icons.directions_bus_rounded.codePoint) return Icons.directions_bus_rounded;
+  if (codePoint == Icons.warning_rounded.codePoint) return Icons.warning_rounded;
+  if (codePoint == Icons.savings_rounded.codePoint) return Icons.savings_rounded;
+  if (codePoint == Icons.shopping_bag_rounded.codePoint) return Icons.shopping_bag_rounded;
+  if (codePoint == Icons.fact_check.codePoint) return Icons.fact_check;
+  return Icons.receipt_long;
 }
 
 class CatFriend {

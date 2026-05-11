@@ -61,15 +61,11 @@ class _GXFinancialAppState extends State<GXFinancialApp> {
             _optimisticProfile = AppProfile(user: user, cat: cat, finance: nextFinance);
           });
           unawaited(
-            Future.wait([
-              widget.backend.saveCat(cat),
-              widget.backend.saveFinance(nextFinance),
-            ]).catchError((error) {
-              if (!mounted) return <void>[];
+            widget.backend.saveCatAndFinance(cat, nextFinance).catchError((error) {
+              if (!mounted) return;
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(SnackBar(content: Text('Could not save adoption yet: $error')));
-              return <void>[];
             }),
           );
         },
@@ -82,6 +78,7 @@ class _GXFinancialAppState extends State<GXFinancialApp> {
       onFinanceChanged: widget.backend.saveFinance,
       onUserChanged: widget.backend.saveUser,
       onCatChanged: widget.backend.saveCat,
+      onCatAndFinanceChanged: widget.backend.saveCatAndFinance,
       onFriendSearch: widget.backend.findFriend,
       incomingFriendRequests: widget.backend.watchIncomingFriendRequests(),
       onFriendRequested: widget.backend.sendFriendRequest,
@@ -147,6 +144,9 @@ class _DefaultBackend implements BackendService {
 
   @override
   Future<void> saveFinance(FinanceState finance) => _delegate.saveFinance(finance);
+
+  @override
+  Future<void> saveCatAndFinance(CatProfile cat, FinanceState finance) => _delegate.saveCatAndFinance(cat, finance);
 
   @override
   Future<void> saveUser(GXUser user) => _delegate.saveUser(user);

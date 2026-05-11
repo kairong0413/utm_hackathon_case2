@@ -25,6 +25,8 @@ abstract class BackendService {
 
   Future<void> saveFinance(FinanceState finance);
 
+  Future<void> saveCatAndFinance(CatProfile cat, FinanceState finance);
+
   Future<void> signOut();
 }
 
@@ -53,7 +55,12 @@ class FirebaseBackendService implements BackendService {
       try {
         await _trySyncAcceptedRequests(firebaseUser.uid);
         await for (final snapshot in _users.doc(firebaseUser.uid).snapshots()) {
-          final profile = _migrateProfile(firebaseUser.uid, _profileFromSnapshot(firebaseUser, snapshot));
+          final migrated = _migrateProfile(firebaseUser.uid, _profileFromSnapshot(firebaseUser, snapshot));
+          final profile = AppProfile(
+            user: migrated.user,
+            cat: migrated.cat,
+            finance: await _refreshFriendSnapshots(migrated.finance),
+          );
           await _tryPublishProfile(firebaseUser.uid, profile);
           yield profile;
         }
@@ -230,10 +237,11 @@ class FirebaseBackendService implements BackendService {
     final snapshot = await doc.get();
     final data = snapshot.data() ?? {};
     final finance = FinanceState.fromMap(_asStringMap(data['finance']));
+    final latestFriend = await _latestFriendSnapshot(friend.ownerUserId, fallback: friend);
     final friends = [
-      friend,
+      latestFriend,
       for (final existing in finance.friends)
-        if (existing.ownerUserId != friend.ownerUserId) existing,
+        if (existing.ownerUserId != latestFriend.ownerUserId) existing,
     ];
     await doc.set({
       'finance': finance.copyWith(friends: friends).toMap(),
@@ -268,6 +276,14 @@ class FirebaseBackendService implements BackendService {
   @override
   Future<void> saveFinance(FinanceState finance) {
     return _save({'finance': finance.toMap()});
+  }
+
+  @override
+  Future<void> saveCatAndFinance(CatProfile cat, FinanceState finance) {
+    return _save({
+      'cat': cat.toMap(),
+      'finance': finance.toMap(),
+    });
   }
 
   @override
@@ -339,8 +355,16 @@ class FirebaseBackendService implements BackendService {
     final cat = profile.cat;
     if (cat == null) return profile;
     final rewards = profile.finance.unlockedRewards;
-    final owned = <String>{...cat.ownedItems, ...rewards}..remove('No item yet');
-    final accessory = owned.contains(cat.accessory) ? cat.accessory : 'No item';
+    final owned = <String>{...cat.ownedItems}
+      ..remove('No item yet')
+      ..removeWhere(rewards.contains);
+    final equipped = cat.accessory
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty && owned.contains(item))
+        .take(2)
+        .toList();
+    final accessory = equipped.isEmpty ? 'No item' : equipped.join(', ');
     return AppProfile(
       user: profile.user.copyWith(userId: userId),
       cat: cat.copyWith(accessory: accessory, ownedItems: owned.toList()),
@@ -351,6 +375,27 @@ class FirebaseBackendService implements BackendService {
         ],
       ),
     );
+  }
+
+  Future<FinanceState> _refreshFriendSnapshots(FinanceState finance) async {
+    if (finance.friends.isEmpty) return finance;
+    final refreshed = <CatFriend>[];
+    for (final friend in finance.friends) {
+      refreshed.add(await _latestFriendSnapshot(friend.ownerUserId, fallback: friend));
+    }
+    return finance.copyWith(friends: refreshed);
+  }
+
+  Future<CatFriend> _latestFriendSnapshot(String userId, {required CatFriend fallback}) async {
+    try {
+      final snapshot = await _publicProfiles.doc(userId).get();
+      if (!snapshot.exists) return fallback;
+      return _friendFromPublicProfile(snapshot.id, snapshot.data() ?? {});
+    } catch (error, stackTrace) {
+      debugPrint('Friend refresh failed for $userId: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return fallback;
+    }
   }
 }
 
@@ -462,6 +507,13 @@ class MemoryBackendService implements BackendService {
     final current = _profile.value;
     if (current == null) return;
     _profile.value = AppProfile(user: current.user, cat: current.cat, finance: finance);
+  }
+
+  @override
+  Future<void> saveCatAndFinance(CatProfile cat, FinanceState finance) async {
+    final current = _profile.value;
+    if (current == null) return;
+    _profile.value = AppProfile(user: current.user, cat: cat, finance: finance);
   }
 
   @override

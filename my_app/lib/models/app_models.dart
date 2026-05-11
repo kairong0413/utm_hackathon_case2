@@ -136,11 +136,12 @@ class CatProfile {
   factory CatProfile.fromMap(Map<String, dynamic> map) {
     final accessory = map['accessory'] as String? ?? 'No item';
     final ownedItems = (map['ownedItems'] as List<dynamic>?)?.whereType<String>().toList() ?? <String>[];
+    final equippedItems = _accessoryItems(accessory).where(ownedItems.contains).take(2).toList();
     return CatProfile(
       name: map['name'] as String? ?? 'Mojo',
       breed: map['breed'] as String? ?? 'Calico',
       breedIndex: map['breedIndex'] as int? ?? 0,
-      accessory: ownedItems.contains(accessory) ? accessory : 'No item',
+      accessory: equippedItems.isEmpty ? 'No item' : equippedItems.join(', '),
       ownedItems: ownedItems,
     );
   }
@@ -157,6 +158,7 @@ class FinanceState {
     required this.resilienceDays,
     required this.emergencyFundPercent,
     required this.reportsReviewed,
+    required this.lastWeeklyReportKey,
     required this.overrideMood,
     required this.levelXp,
     required this.transactions,
@@ -172,6 +174,7 @@ class FinanceState {
   final int resilienceDays;
   final int emergencyFundPercent;
   final int reportsReviewed;
+  final int lastWeeklyReportKey;
   final CatMood overrideMood;
   final int levelXp;
   final List<GXTransaction> transactions;
@@ -211,6 +214,7 @@ class FinanceState {
       resilienceDays: 0,
       emergencyFundPercent: 0,
       reportsReviewed: 0,
+      lastWeeklyReportKey: 0,
       overrideMood: CatMood.neutral,
       levelXp: 0,
       transactions: [],
@@ -310,6 +314,7 @@ class FinanceState {
     int? resilienceDays,
     int? emergencyFundPercent,
     int? reportsReviewed,
+    int? lastWeeklyReportKey,
     CatMood? overrideMood,
     int? levelXp,
     List<GXTransaction>? transactions,
@@ -325,6 +330,7 @@ class FinanceState {
       resilienceDays: resilienceDays ?? this.resilienceDays,
       emergencyFundPercent: emergencyFundPercent ?? this.emergencyFundPercent,
       reportsReviewed: reportsReviewed ?? this.reportsReviewed,
+      lastWeeklyReportKey: lastWeeklyReportKey ?? this.lastWeeklyReportKey,
       overrideMood: overrideMood ?? this.overrideMood,
       levelXp: levelXp ?? this.levelXp,
       transactions: transactions ?? List.of(this.transactions),
@@ -343,6 +349,7 @@ class FinanceState {
       'resilienceDays': resilienceDays,
       'emergencyFundPercent': emergencyFundPercent,
       'reportsReviewed': reportsReviewed,
+      'lastWeeklyReportKey': lastWeeklyReportKey,
       'overrideMood': overrideMood.name,
       'levelXp': levelXp,
       'transactions': transactions.map((transaction) => transaction.toMap()).toList(),
@@ -362,6 +369,7 @@ class FinanceState {
       resilienceDays: map['resilienceDays'] as int? ?? fallback.resilienceDays,
       emergencyFundPercent: map['emergencyFundPercent'] as int? ?? fallback.emergencyFundPercent,
       reportsReviewed: map['reportsReviewed'] as int? ?? fallback.reportsReviewed,
+      lastWeeklyReportKey: map['lastWeeklyReportKey'] as int? ?? fallback.lastWeeklyReportKey,
       overrideMood: CatMood.values.firstWhere(
         (mood) => mood.name == map['overrideMood'],
         orElse: () => fallback.overrideMood,
@@ -562,4 +570,14 @@ Map<String, dynamic> _stringMap(Object? value) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
   return {};
+}
+
+List<String> _accessoryItems(String accessory) {
+  final normalized = accessory.trim();
+  if (normalized.isEmpty || normalized == 'No item' || normalized == 'No item yet') return const [];
+  return normalized
+      .split(',')
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty && item != 'No item' && item != 'No item yet')
+      .toList();
 }
